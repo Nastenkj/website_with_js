@@ -22,9 +22,8 @@ document.addEventListener('DOMContentLoaded', function() {
 const validationSettings = {
     formSelector: '.popup__form',
     inputSelector: '.popup__input',
-    submitButtonSelector: '.popup__button',
     inactiveButtonClass: 'profile__button-inactive',
-    inputErrorClass: 'form__input_type_error',
+  inputErrorClass: 'form__input_type_error',
     errorClass: 'popup__error_visible'
 };
  
