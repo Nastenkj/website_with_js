@@ -1,9 +1,50 @@
 import "../pages/index.css";
 import './cards.js';
+import { createCard } from './cards.js';
 import { initialCards } from './cards.js';
+import { openModal, closeModal, closeByOverlay, closeByEsc} from './modal.js';
 import { enableValidation } from '../components/validate.js';
 import { toggleButtonState } from '../components/validate.js';
  
+// запрос к сереру
+const config = {
+    baseUrl: 'https://nomoreparties.co/v1/apf-cohort-202',  // адрес группы на сервере
+    headers: {      // заголовки запроса
+      authorization: '03f97712-def8-4441-86d0-7714121d8da0',    // мой уникальный токен
+      'Content-Type': 'application/json'    // тип данных, с которыми работает сервер (Json)
+    }
+};
+
+// Get - запрос на адрес
+function getUserInfo() {
+    return fetch(`${config.baseUrl}/users/me`, {
+      headers: config.headers
+    })
+    .then(res => {
+        if (res.ok) {
+          return res.json();
+        }
+        return Promise.reject(`Ошибка: ${res.status}`);
+    });
+}
+
+// Загрузка информации о пользователе с сервера
+document.addEventListener('DOMContentLoaded', function () {
+    const profileImage = document.querySelector('.profile__image');
+    const profileTitle = document.querySelector('.profile__title');
+    const profileDescription = document.querySelector('.profile__description');
+  
+    getUserInfo()
+      .then(user => {
+        profileTitle.textContent = user.name;
+        profileDescription.textContent = user.about;
+        profileImage.style.backgroundImage = `url(${user.avatar})`;
+    })
+    .catch(err => {
+        console.error('Ошибка при загрузке информации о пользователе:', err);
+    });
+});
+
 // Добавляем модификатор для анимации всем попапам при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
     const popups = document.querySelectorAll('.popup');
@@ -22,42 +63,11 @@ document.addEventListener('DOMContentLoaded', function() {
 const validationSettings = {
     formSelector: '.popup__form',
     inputSelector: '.popup__input',
+    submitButtonSelector: '.popup__button',
     inactiveButtonClass: 'profile__button-inactive',
-  inputErrorClass: 'form__input_type_error',
+    inputErrorClass: 'form__input_type_error',
     errorClass: 'popup__error_visible'
 };
- 
-function createCard(cardData) {
-    const cardTemplate = document.querySelector('#card-template').content;
-    const cardElement = cardTemplate.querySelector('.card').cloneNode(true);
- 
-    const cardImage = cardElement.querySelector('.card__image');
-    const cardTitle = cardElement.querySelector('.card__title');
- 
-    cardImage.src = cardData.link;
-    cardImage.alt = cardData.name;
-    cardTitle.textContent = cardData.name;
- 
-    // лайк карточке
-    cardElement.querySelector('.card__like-button').addEventListener('click', function(evt){
-      evt.target.classList.toggle('card__like-button_is-active');
-    });
- 
-    // удаление карточки
-    cardElement.querySelector('.card__delete-button').addEventListener('click', function(evt){
-      evt.target.closest('.card').remove();
-    })
- 
-    // Добавляем обработчик клика на изображение карточки
-    cardImage.addEventListener('click', function() {
-      popupImage.src = cardData.link;
-      popupImage.alt = cardData.name;
-      popupCaption.textContent = cardData.name;
-      openModal(imagePopup);
-    });
- 
-    return cardElement;
-}
  
 function renderInitialCards() {
     const cardsContainer = document.querySelector('.places__list');
@@ -80,38 +90,6 @@ const profileFormElement  = profilePopup.querySelector('.popup__form');
 // поля ввода в попапе профеля
 const nameInput = profileFormElement.querySelector('.popup__input_type_name');
 const descriptionInput = profileFormElement.querySelector('.popup__input_type_description');
- 
- 
-// Функция открытия попапа
-function openModal(popup) {
-    popup.classList.add('popup_is-opened');
-    document.addEventListener('keydown', closeByEsc); // Добавляем обработчик для закрытия на Esc
-}
- 
-// Функция закрытия попапа
-function closeModal(popup) {
-    popup.classList.remove('popup_is-opened');
-    document.removeEventListener('keydown', closeByEsc); // Удаляем обработчик для закрытия на Esc
-}
- 
- function closeByOverlay(evt) {
-    if (evt.target === evt.currentTarget) {     // evt.target - это конкретный элемент, по которому кликнули
-                                                // evt.currentTarget - это элемент, на котором висит обработчик события (в нашем случае - сам попап)
-        const openedPopup = document.querySelector('.popup_is-opened');
-        if (openedPopup) {
-            closeModal(openedPopup);
-        }
-    }
-}
- 
-function closeByEsc(evt) {
-    if (evt.key === 'Escape') {
-        const openedPopup = document.querySelector('.popup_is-opened');
-        if (openedPopup) {
-            closeModal(openedPopup);
-        }
-    }
-}
  
 // Обработчики для профиля
 const buttonOpenProfileEdit = document.querySelector('.profile__edit-button');
