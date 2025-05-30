@@ -53,7 +53,7 @@ module.exports = {
   	new HtmlWebpackPlugin({
   		template: './src/index.html' // путь к файлу index.html
   	}),
-  	new CleanWebpackPlugin(), // использовали плагин
+  	//new CleanWebpackPlugin(), // использовали плагин очистить
   	new MiniCssExtractPlugin() // подключение плагина для объединения файлов
   ]
 };

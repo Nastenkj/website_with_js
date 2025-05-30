@@ -1,4 +1,4 @@
-
+import { openModal } from './modal.js'
 
 export const initialCards = [
     {
@@ -26,6 +26,9 @@ export const initialCards = [
       link: "https://pictures.s3.yandex.net/frontend-developer/cards-compressed/baikal.jpg",
     }
 ];
+const imagePopup = document.querySelector('.popup_type_image');
+const popupImage = imagePopup.querySelector('.popup__image');
+const popupCaption = imagePopup.querySelector('.popup__caption');
 
 export function createCard(cardData) {
     const cardTemplate = document.querySelector('#card-template').content;
@@ -58,45 +61,3 @@ export function createCard(cardData) {
  
     return cardElement;
 }
-
-/*// Функция создания карточки
-export function createCard(cardData, handleLikeClick, handleDeleteClick, handleImageClick) {
-  const cardTemplate = document.querySelector('#card-template').content;
-  const cardElement = cardTemplate.querySelector('.card').cloneNode(true);
-  
-  const cardImage = cardElement.querySelector('.card__image');
-  const cardTitle = cardElement.querySelector('.card__title');
-  const likeButton = cardElement.querySelector('.card__like-button');
-  const deleteButton = cardElement.querySelector('.card__delete-button');
-  
-  cardImage.src = cardData.link;
-  cardImage.alt = cardData.name;
-  cardTitle.textContent = cardData.name;
-
-  // лайк карточке
-  likeButton.addEventListener('click', () => {
-    handleLikeClick(likeButton);
-  });
-
-  // Обработчик лайка карточки
-  const handleLikeClick = (likeButton) => {
-    likeButton.classList.toggle('card__like-button_is-active');
-  };
-
-  // удаление карточки
-  deleteButton.addEventListener('click', () => {
-    handleDeleteClick(cardElement);
-  });
-
-  // Обработчик удаления карточки
-  const handleDeleteClick = (cardElement) => {
-    cardElement.remove();
-  };
-
-  // Добавляем обработчик клика на изображение карточки
-  cardImage.addEventListener('click', () => {
-    handleImageClick(cardData.link, cardData.name);
-  });
-  
-  return cardElement;
-};*/

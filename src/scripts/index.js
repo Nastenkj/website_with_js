@@ -1,12 +1,10 @@
 import "../pages/index.css";
 import './cards.js';
-import { createCard } from './cards.js';
-import { initialCards } from './cards.js';
-import { openModal, closeModal, closeByOverlay, closeByEsc} from './modal.js';
-import { enableValidation } from '../components/validate.js';
-import { toggleButtonState } from '../components/validate.js';
+import { initialCards, createCard } from './cards.js';
+import { enableValidation, toggleButtonState } from '../components/validate.js';
+import { openModal, closeModal, closeByOverlay } from './modal.js'
  
-// запрос к сереру
+// запрос к сереру (API)
 const config = {
     baseUrl: 'https://nomoreparties.co/v1/apf-cohort-202',  // адрес группы на сервере
     headers: {      // заголовки запроса
@@ -162,10 +160,8 @@ function handleCardFormSubmit (evt) {
  
 cardFormElemnt.addEventListener('submit', handleCardFormSubmit );
  
-const imagePopupOpen = document.querySelector('.places');
+// const imagePopupOpen = document.querySelector('.places');
 const imagePopupClose = imagePopup.querySelector('.popup__close');
-const popupImage = imagePopup.querySelector('.popup__image');
-const popupCaption = imagePopup.querySelector('.popup__caption');
  
 imagePopupClose.addEventListener('click', function(){
     closeModal(imagePopup);
