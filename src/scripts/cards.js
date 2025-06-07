@@ -1,5 +1,5 @@
 import { openModal } from './modal.js';
-import { deleteCardFromServer, likeCard, unlikeCard } from './index.js'; 
+import { deleteCardFromServer, likeCard, unlikeCard } from './api.js'; 
 
 const imagePopup = document.querySelector('.popup_type_image');
 const popupImage = imagePopup.querySelector('.popup__image');

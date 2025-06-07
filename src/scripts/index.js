@@ -3,6 +3,7 @@ import './cards.js';
 import { createCard } from './cards.js';
 import { enableValidation, toggleButtonState } from '../components/validate.js';
 import { openModal, closeModal, closeByOverlay } from './modal.js'
+import { getUserInfo, getInitialCards, updateUserInfo, addNewCard, deleteCardFromServer, likeCard, unlikeCard, updateUserAvatar} from './api.js'
  
 // Переменная для хранения ID текущего пользователя
 let currentUserId = null;
@@ -25,150 +26,6 @@ function renderLoading(isLoading, buttonElement, initialText = 'Сохранит
     }
 }
 
-// Get - запрос на адрес
-function getUserInfo() {
-    return fetch(`${config.baseUrl}/users/me`, {
-      headers: config.headers
-    })
-    .then(res => {
-        if (res.ok) {
-          return res.json();
-        }
-        return Promise.reject(`Ошибка: ${res.status}`);
-    })
-    .catch((err) => {
-        console.log(err); // выводим ошибку в консоль
-    });
-};
-
-// берем карточки с сервера
-function getCards(){
-    return fetch(`${config.baseUrl}/cards`, {
-      headers: config.headers
-    })
-    .then(res => {
-        if (res.ok) {
-          return res.json();
-        }
-        return Promise.reject(`Ошибка при загрузке карточек: ${res.status}`);
-    })
-    .catch((err) => {
-        console.log(err); // выводим ошибку в консоль
-    });
-};
-
-// обновляем информацию о пользователе на сервере
-function updateUserInfo(name, about){
-    return fetch(`${config.baseUrl}/users/me`, {
-        method: 'PATCH',
-        headers: config.headers,
-        body: JSON.stringify({
-            name: name,
-            about: about
-        })
-    })
-    .then(res => {
-        if (res.ok) {
-          return res.json();
-        }
-        return Promise.reject(`Ошибка при загрузке карточек: ${res.status}`);
-    })
-    .catch((err) => {
-        console.log(err); // выводим ошибку в консоль
-    });
-};
-
-// для смены аватара
-function updateUserAvatar(avatarLink){
-    return fetch(`${config.baseUrl}/users/me/avatar`, {
-        method: 'PATCH',
-        headers: config.headers,
-        body: JSON.stringify({
-            avatar: avatarLink
-        })
-    })
-    .then(res => {
-        if (res.ok) {
-          return res.json();
-        }
-        return Promise.reject(`Ошибка при смене аватара: ${res.status}`);
-    })
-    .catch((err) => {
-        console.log(err); // выводим ошибку в консоль
-    });
-}
-
-// Добавление новой карточки
-function addNewCards(name, link){
-    return fetch(`${config.baseUrl}/cards`, {
-        method: 'POST',
-        headers: config.headers,
-        body: JSON.stringify({
-            name: name,
-            link: link
-        })
-    })
-    .then(res => {
-        if (res.ok) {
-          return res.json();
-        }
-        return Promise.reject(`Ошибка при добавлении карточки: ${res.status}`);
-    })
-    .catch((err) => {
-        console.log(err); // выводим ошибку в консоль
-    });
-};
-
-export function deleteCardFromServer(cardId) {
-    return fetch(`${config.baseUrl}/cards/${cardId}`, {
-        method: 'DELETE',
-        headers: config.headers
-    })
-    .then(res => {
-        if(res.ok){
-            return res.json();
-        }
-        return Promise.reject(`Ошибка при удалении карточки: ${res.status}`);
-    })
-    .catch((err) => {
-        console.log(err); // выводим ошибку в консоль
-    });
-}
-
-// ставим лайк
-export function likeCard(cardId) {
-    return fetch(`${config.baseUrl}/cards/likes/${cardId}`, {
-        method: 'PUT',
-        headers: config.headers
-    })
-    .then(res => {
-        if(res.ok){
-            return res.json();
-        }
-        return Promise.reject(`Ошибка при посановке лайка: ${res.status}`);
-    })
-    .catch((err) => {
-        console.log(err); // выводим ошибку в консоль
-    });
-}
-
-// удаляем лайк
-export function unlikeCard(cardId) {
-    return fetch(`${config.baseUrl}/cards/likes/${cardId}`, {
-        method: 'DELETE',
-        headers: config.headers
-    })
-    .then(res => {
-        if(res.ok){
-            return res.json();
-        }
-        return Promise.reject(`Ошибка при снятии лайка: ${res.status}`);
-    })
-    .catch((err) => {
-        console.log(err); // выводим ошибку в консоль
-    });
-}
-
 const profileImageElement = document.querySelector('.profile__image');
 const profileTitleElement = document.querySelector('.profile__title');
 const profileDescriptionElement = document.querySelector('.profile__description');
@@ -178,7 +35,7 @@ const cardsContainer = document.querySelector('.places__list');
 // Загрузка информации о пользователе и карточки с сервера
 document.addEventListener('DOMContentLoaded', function () {
   
-    Promise.all([getUserInfo(), getCards()])
+    Promise.all([getUserInfo(), getInitialCards()])
       .then(([user,cards]) => {
         profileTitleElement.textContent = user.name;
         profileDescriptionElement.textContent = user.about;
@@ -358,7 +215,7 @@ function handleCardFormSubmit (evt) {
 
     renderLoading(true, newCardSubmitButton, 'Создать'); // Показываем "Сохранение...", исходный текст "Создать"
 
-    addNewCards(cardName, cardLink)
+    addNewCard(cardName, cardLink)
         .then(newCardData => {
             const cardsContainer = document.querySelector('.places__list');
             cardsContainer.prepend(createCard(newCardData, currentUserId));    /*метод, который вставляет элемент в начало контейнера*/
