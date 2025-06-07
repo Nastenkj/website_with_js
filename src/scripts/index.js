@@ -16,6 +16,15 @@ const config = {
     }
 };
 
+// Функция для отображения состояния загрузки на кнопке
+function renderLoading(isLoading, buttonElement, initialText = 'Сохранить') {
+    if (isLoading) {
+        buttonElement.textContent = 'Сохранение...';
+    } else {
+        buttonElement.textContent = initialText;
+    }
+}
+
 // Get - запрос на адрес
 function getUserInfo() {
     return fetch(`${config.baseUrl}/users/me`, {
@@ -160,19 +169,20 @@ export function unlikeCard(cardId) {
     });
 }
 
+const profileImageElement = document.querySelector('.profile__image');
+const profileTitleElement = document.querySelector('.profile__title');
+const profileDescriptionElement = document.querySelector('.profile__description');
+
+const cardsContainer = document.querySelector('.places__list');
+
 // Загрузка информации о пользователе и карточки с сервера
 document.addEventListener('DOMContentLoaded', function () {
-    const profileImage = document.querySelector('.profile__image');
-    const profileTitle = document.querySelector('.profile__title');
-    const profileDescription = document.querySelector('.profile__description');
-
-    const cardsContainer = document.querySelector('.places__list');
   
     Promise.all([getUserInfo(), getCards()])
       .then(([user,cards]) => {
-        profileTitle.textContent = user.name;
-        profileDescription.textContent = user.about;
-        profileImage.style.backgroundImage = `url(${user.avatar})`;
+        profileTitleElement.textContent = user.name;
+        profileDescriptionElement.textContent = user.about;
+        profileImageElement.style.backgroundImage = `url(${user.avatar})`;
 
         currentUserId = user._id; // СОХРАНЯЕМ ID ТЕКУЩЕГО ПОЛЬЗОВАТЕЛЯ
 
@@ -217,9 +227,6 @@ const imagePopup = document.querySelector('.popup_type_image');
 // НОВЫЙ ПОПАП АВАТАРА
 const avatarPopup = document.querySelector('.popup_type_edit-avatar');
  
-const profileTitleElement = document.querySelector('.profile__title');
-const profileDescriptionElement = document.querySelector('.profile__description');
- 
 const profileFormElement  = profilePopup.querySelector('.popup__form');
  
 // поля ввода в попапе профеля
@@ -229,12 +236,15 @@ const descriptionInput = profileFormElement.querySelector('.popup__input_type_de
 // Обработчики для профиля
 const buttonOpenProfileEdit = document.querySelector('.profile__edit-button');
 const buttonCloseProfileEdit = profilePopup.querySelector('.popup__close');
+
+const profileSubmitButton = profileFormElement.querySelector('.popup__button'); // Кнопка формы профиля
  
 // Элементы для аватара
-const profileImageElement = document.querySelector('.profile__image');
 const avatarFormElement = avatarPopup.querySelector('.popup__form');
 const avatarLinkInput = avatarFormElement.querySelector('#avatar-link-input');
 const buttonCloseAvatarEdit = avatarPopup.querySelector('.popup__close');
+
+const avatarSubmitButton = avatarFormElement.querySelector('.popup__button'); // Кнопка формы аватара
 
 // Открытие попапа редактирования аватара
 profileImageElement.addEventListener('click', function() {
@@ -255,14 +265,20 @@ function handleAvatarFormSubmit(evt) {
     evt.preventDefault();
     const newAvatarLink = avatarLinkInput.value;
 
+    renderLoading(true, avatarSubmitButton); // Показываем "Сохранение..."
+
     updateUserAvatar(newAvatarLink)
         .then(updatedUser => {
-            profileImageElement.style.backgroundImage = url(`${updatedUser.avatar}`);
-            closeModal(avatarPopup);
+            profileImageElement.style.backgroundImage = `url(${updatedUser.avatar})`;
+            closeModal(avatarPopup);    // Закрываем попап только при успехе
             avatarFormElement.reset(); // Сброс формы после успешной отправки
         })
         .catch(err => {
             console.error('Ошибка при обновлении аватара:', err);
+            // Попап остается открытым при ошибке
+        })
+        .finally(() => {
+            renderLoading(false, avatarSubmitButton); // Возвращаем исходный текст кнопки
         });
 }
 avatarFormElement.addEventListener('submit', handleAvatarFormSubmit);
@@ -276,13 +292,12 @@ buttonOpenProfileEdit.addEventListener('click', function(){
     const inputList = Array.from(profileFormElement.querySelectorAll('.popup__input'));
     const buttonElement = profileFormElement.querySelector('.popup__button');
     toggleButtonState(inputList, buttonElement, validationSettings);
-    //buttonElement.disabled = false;
 });
  
 buttonCloseProfileEdit.addEventListener('click', function(){
     closeModal(profilePopup);
 });
- //!!!!!!!!!!
+
 // Обработчик «отправки» формы, хотя пока она никуда отправляться не будет
 function handleProfileFormSubmit(evt) {
     evt.preventDefault(); // Эта строчка отменяет стандартную отправку формы.
@@ -290,14 +305,20 @@ function handleProfileFormSubmit(evt) {
     const newName = nameInput.value;
     const newAbout = descriptionInput.value;
 
+    renderLoading(true, profileSubmitButton); // Показываем "Сохранение..."
+
     updateUserInfo(newName, newAbout)
     .then(updatedUser => {
         profileTitleElement.textContent = updatedUser.name;
         profileDescriptionElement.textContent = updatedUser.about;
-        closeModal(profilePopup);
+        closeModal(profilePopup);   // Закрываем попап только при успехе
     })
     .catch(err => {
         console.error('Ошибка при сохранении данных профиля:', err);
+        // Попап остается открытым при ошибке
+    })
+    .finally(() => {
+        renderLoading(false, profileSubmitButton); // Возвращаем исходный текст кнопки
     });
 }
  
@@ -307,6 +328,9 @@ profileFormElement.addEventListener('submit', handleProfileFormSubmit);
  
 const profileAddButton = document.querySelector('.profile__add-button')
 const buttonCloseAdd = cardPopup.querySelector('.popup__close');
+const cardFormElemnt = cardPopup.querySelector('.popup__form');
+const newCardSubmitButton = cardFormElemnt.querySelector('.popup__button'); // Кнопка формы добавления карточки
+
  
 profileAddButton.addEventListener('click', function(){
     openModal(cardPopup);
@@ -321,8 +345,6 @@ buttonCloseAdd.addEventListener('click', function(){
     closeModal(cardPopup);
 });
  
-const cardFormElemnt = cardPopup.querySelector('.popup__form');
- 
 // поля ввода в попапе добавления места
 const namePlaces = cardFormElemnt.querySelector('.popup__input_type_card-name');
 const urlPlaces = cardFormElemnt.querySelector('.popup__input_type_url');
@@ -334,16 +356,22 @@ function handleCardFormSubmit (evt) {
     const cardName = namePlaces.value;
     const cardLink = urlPlaces.value;
 
+    renderLoading(true, newCardSubmitButton, 'Создать'); // Показываем "Сохранение...", исходный текст "Создать"
+
     addNewCards(cardName, cardLink)
         .then(newCardData => {
             const cardsContainer = document.querySelector('.places__list');
             cardsContainer.prepend(createCard(newCardData, currentUserId));    /*метод, который вставляет элемент в начало контейнера*/
             cardFormElemnt.reset(); // Очищаем форму после добавления карточки
  
-            closeModal(cardPopup);
+            closeModal(cardPopup);  // Закрываем попап только при успехе
         })
         .catch(err => {
             console.error('Ошибка при добавлении новой карточки:', err);
+            // Попап остается открытым при ошибке
+        })
+        .finally(() => {
+            renderLoading(false, newCardSubmitButton, 'Создать'); // Возвращаем исходный текст кнопки
         });
 }
  
