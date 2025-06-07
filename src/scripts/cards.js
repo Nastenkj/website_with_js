@@ -1,5 +1,5 @@
 import { openModal } from './modal.js';
-import { deleteCardFromServer } from './index.js'; 
+import { deleteCardFromServer, likeCard, unlikeCard } from './index.js'; 
 
 const imagePopup = document.querySelector('.popup_type_image');
 const popupImage = imagePopup.querySelector('.popup__image');
@@ -13,6 +13,7 @@ export function createCard(cardData, currentUserId) {
   const cardTitle = cardElement.querySelector('.card__title');
 
   const likeCountElement = cardElement.querySelector('.card__like-count');
+  const likeButton = cardElement.querySelector('.card__like-button');
   const deleteButton = cardElement.querySelector('.card__delete-button'); // Находим кнопку удаления
 
   cardImage.src = cardData.link;
@@ -23,6 +24,11 @@ export function createCard(cardData, currentUserId) {
   // Проверяем, существует ли массив likes и если да, то берем его длину
   if (cardData.likes && Array.isArray(cardData.likes)) { // ДОБАВЬТЕ ЭТОТ БЛОК
     likeCountElement.textContent = cardData.likes.length;
+    // Проверяем, лайкнул ли текущий пользователь карточку 
+    const hasLiked = cardData.likes.some(user => user._id === currentUserId); 
+    if (hasLiked) { 
+      likeButton.classList.add('card__like-button_is-active'); 
+    }
   } else {
     likeCountElement.textContent = '0'; // Если лайков нет или свойство отсутствует, отображаем 0
   }
@@ -48,10 +54,35 @@ export function createCard(cardData, currentUserId) {
     deleteButton.style.display = 'none'; // Скрываем кнопку, если карточка не наша. Или можно было бы удалить сам элемент: deleteButton.remove();
   }
 
+  // Обработчик события для лайка/дизлайка 
+  likeButton.addEventListener('click', function(evt){ 
+    const cardId = cardData._id; 
+    const isLiked = evt.target.classList.contains('card__like-button_is-active'); 
+    if (isLiked) { 
+      unlikeCard(cardId) 
+        .then(updatedCard => { 
+          evt.target.classList.remove('card__like-button_is-active'); 
+          likeCountElement.textContent = updatedCard.likes.length; 
+        })
+        .catch(err => { 
+          console.error('Ошибка при снятии лайка:', err); 
+        }); 
+      } else { 
+        likeCard(cardId) 
+          .then(updatedCard => { 
+            evt.target.classList.add('card__like-button_is-active'); 
+            likeCountElement.textContent = updatedCard.likes.length; 
+          }) 
+          .catch(err => { 
+            console.error('Ошибка при постановке лайка:', err); 
+          });
+        } 
+      });
+
   // лайк карточке
-  cardElement.querySelector('.card__like-button').addEventListener('click', function(evt){
+  /*cardElement.querySelector('.card__like-button').addEventListener('click', function(evt){
     evt.target.classList.toggle('card__like-button_is-active');
-  });
+  });*/
  
   // удаление карточки
   /*cardElement.querySelector('.card__delete-button').addEventListener('click', function(evt){
