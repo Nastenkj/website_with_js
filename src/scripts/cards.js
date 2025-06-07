@@ -1,10 +1,11 @@
-import { openModal } from './modal.js'
+import { openModal } from './modal.js';
+import { deleteCardFromServer } from './index.js'; 
 
 const imagePopup = document.querySelector('.popup_type_image');
 const popupImage = imagePopup.querySelector('.popup__image');
 const popupCaption = imagePopup.querySelector('.popup__caption');
 
-export function createCard(cardData) {
+export function createCard(cardData, currentUserId) {
   const cardTemplate = document.querySelector('#card-template').content;
   const cardElement = cardTemplate.querySelector('.card').cloneNode(true);
  
@@ -12,6 +13,7 @@ export function createCard(cardData) {
   const cardTitle = cardElement.querySelector('.card__title');
 
   const likeCountElement = cardElement.querySelector('.card__like-count');
+  const deleteButton = cardElement.querySelector('.card__delete-button'); // Находим кнопку удаления
 
   cardImage.src = cardData.link;
   cardImage.alt = cardData.name;
@@ -24,16 +26,37 @@ export function createCard(cardData) {
   } else {
     likeCountElement.textContent = '0'; // Если лайков нет или свойство отсутствует, отображаем 0
   }
- 
+
+  // Логика отображения кнопки удаления
+  // Проверяем, если owner._id карточки совпадает с currentUserId, то показываем кнопку
+  if (cardData.owner && cardData.owner._id === currentUserId) {
+    deleteButton.style.display = 'block'; // Или удалите класс, который скрывает кнопку
+    // Добавляем обработчик клика на кнопку удаления
+    deleteButton.addEventListener('click', function(evt){
+        const cardId = cardData._id; // Получаем ID карточки
+        deleteCardFromServer(cardId)
+            .then(() => {
+                // Если удаление с сервера прошло успешно, удаляем карточку из DOM
+                evt.target.closest('.card').remove();
+            })
+            .catch(err => {
+                console.error('Ошибка при удалении карточки:', err);
+                // Можно добавить отображение ошибки пользователю
+            });
+    });
+  } else {
+    deleteButton.style.display = 'none'; // Скрываем кнопку, если карточка не наша. Или можно было бы удалить сам элемент: deleteButton.remove();
+  }
+
   // лайк карточке
   cardElement.querySelector('.card__like-button').addEventListener('click', function(evt){
     evt.target.classList.toggle('card__like-button_is-active');
   });
  
   // удаление карточки
-  cardElement.querySelector('.card__delete-button').addEventListener('click', function(evt){
+  /*cardElement.querySelector('.card__delete-button').addEventListener('click', function(evt){
     evt.target.closest('.card').remove();
-  })
+  })*/
  
   // Добавляем обработчик клика на изображение карточки
   cardImage.addEventListener('click', function() {
