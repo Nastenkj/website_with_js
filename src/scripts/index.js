@@ -1,6 +1,6 @@
 import "../pages/index.css";
 import './cards.js';
-import { initialCards, createCard } from './cards.js';
+import { createCard } from './cards.js';
 import { enableValidation, toggleButtonState } from '../components/validate.js';
 import { openModal, closeModal, closeByOverlay } from './modal.js'
  
@@ -24,24 +24,81 @@ function getUserInfo() {
         }
         return Promise.reject(`Ошибка: ${res.status}`);
     });
-}
+};
 
-// Загрузка информации о пользователе с сервера
+// берем карточки с сервера
+function getCards(){
+    return fetch(`${config.baseUrl}/cards`, {
+      headers: config.headers
+    })
+    .then(res => {
+        if (res.ok) {
+          return res.json();
+        }
+        return Promise.reject(`Ошибка при загрузке карточек: ${res.status}`);
+    });
+};
+
+// обновляем информацию о пользователе на сервере
+function updateUserInfo(name, about){
+    return fetch(`${config.baseUrl}/users/me`, {
+        method: 'PATCH',
+        headers: config.headers,
+        body: JSON.stringify({
+            name: name,
+            about: about
+        })
+    })
+    .then(res => {
+        if (res.ok) {
+          return res.json();
+        }
+        return Promise.reject(`Ошибка при загрузке карточек: ${res.status}`);
+    });
+};
+
+// Добавление новой карточки
+function addNewCards(name, link){
+    return fetch(`${config.baseUrl}/cards`, {
+        method: 'POST',
+        headers: config.headers,
+        body: JSON.stringify({
+            name: name,
+            link: link
+        })
+    })
+    .then(res => {
+        if (res.ok) {
+          return res.json();
+        }
+        return Promise.reject(`Ошибка при добавлении карточки: ${res.status}`);
+    });
+};
+
+// Загрузка информации о пользователе и карточки с сервера
 document.addEventListener('DOMContentLoaded', function () {
     const profileImage = document.querySelector('.profile__image');
     const profileTitle = document.querySelector('.profile__title');
     const profileDescription = document.querySelector('.profile__description');
+
+    const cardsContainer = document.querySelector('.places__list');
   
-    getUserInfo()
-      .then(user => {
+    Promise.all([getUserInfo(), getCards()])
+      .then(([user,cards]) => {
         profileTitle.textContent = user.name;
         profileDescription.textContent = user.about;
         profileImage.style.backgroundImage = `url(${user.avatar})`;
+
+         // Отрисовываем начальные карточки
+        cards.forEach(cardData => {
+            cardsContainer.append(createCard(cardData));
+        });
     })
     .catch(err => {
-        console.error('Ошибка при загрузке информации о пользователе:', err);
+        console.error('Ошибка при загрузке данных:', err);
     });
 });
+
 
 // Добавляем модификатор для анимации всем попапам при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
@@ -55,7 +112,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
  
     enableValidation(validationSettings);
-    /*renderInitialCards();*/
 });  
  
 const validationSettings = {
@@ -66,15 +122,6 @@ const validationSettings = {
     inputErrorClass: 'form__input_type_error',
     errorClass: 'popup__error_visible'
 };
- 
-function renderInitialCards() {
-    const cardsContainer = document.querySelector('.places__list');
-    initialCards.forEach(cardData => {
-      cardsContainer.append(createCard(cardData));
-    });
-}
- 
-renderInitialCards();
  
 const profilePopup = document.querySelector('.popup_type_edit');
 const cardPopup = document.querySelector('.popup_type_new-card');
@@ -112,13 +159,19 @@ buttonCloseProfileEdit.addEventListener('click', function(){
 // Обработчик «отправки» формы, хотя пока она никуда отправляться не будет
 function handleProfileFormSubmit(evt) {
     evt.preventDefault(); // Эта строчка отменяет стандартную отправку формы.
- 
-    profileTitle.textContent = nameInput.value;
-    profileDescription.textContent = descriptionInput.value;
-    // Получите значение полей jobInput и nameInput из свойства value
-    // Выберите элементы, куда должны быть вставлены значения полей
-    // Вставьте новые значения с помощью textContent
-    closeModal(profilePopup);
+
+    const newName = nameInput.value;
+    const newAbout = descriptionInput.value;
+
+    updateUserInfo(newName, newAbout)
+    .then(updatedUser => {
+        profileTitle.textContent = updatedUser.name;
+        profileDescription.textContent = updatedUser.about;
+        closeModal(profilePopup);
+    })
+    .catch(err => {
+        console.error('Ошибка при сохранении данных профиля:', err);
+    });
 }
  
 // Прикрепляем обработчик к форме:
@@ -146,21 +199,21 @@ const urlPlaces = cardFormElemnt.querySelector('.popup__input_type_url');
 function handleCardFormSubmit (evt) {
     evt.preventDefault(); // Эта строчка отменяет стандартную отправку формы.
  
-    const newCard = {
-        name: namePlaces.value,
-        link: urlPlaces.value
-    }
+    const cardName = namePlaces.value;
+    const cardLink = urlPlaces.value;
+
+    addNewCards(cardName, cardLink)
+        .then(newCardData => {
+            const cardsContainer = document.querySelector('.places__list');
+            cardsContainer.prepend(createCard(newCardData));    /*метод, который вставляет элемент в начало контейнера*/
+            cardFormElemnt.reset(); // Очищаем форму после добавления карточки
  
-    const cardsContainer = document.querySelector('.places__list');
-    cardsContainer.prepend(createCard(newCard));    /*метод, который вставляет элемент в начало контейнера*/
-    cardFormElemnt.reset(); // Очищаем форму после добавления карточки
- 
-    closeModal(cardPopup);
+            closeModal(cardPopup);
+        });
 }
  
 cardFormElemnt.addEventListener('submit', handleCardFormSubmit );
  
-// const imagePopupOpen = document.querySelector('.places');
 const imagePopupClose = imagePopup.querySelector('.popup__close');
  
 imagePopupClose.addEventListener('click', function(){
