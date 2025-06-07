@@ -22,7 +22,7 @@ const setEventListeners = (profileFormElement, settings) => {
         checkInputValidity(profileFormElement, inputElement, settings);
  
         // Вызовем toggleButtonState и передадим ей массив полей и кнопку
-        toggleButtonState(inputList, buttonElement,settings);
+        toggleButtonState(inputList, buttonElement, settings);
       });
     });
 };
@@ -73,7 +73,7 @@ const checkInputValidity = (formElement, inputElement, settings) => {
     }
 };
  
-    const isValid = (formElement, inputElement) => {
+    /*const isValid = (formElement, inputElement) => {
         if (!inputElement.validity.valid) {
             // Если поле не проходит валидацию, покажем ошибку
             showInputError(formElement, inputElement);
@@ -82,7 +82,7 @@ const checkInputValidity = (formElement, inputElement, settings) => {
             // Если проходит, скроем
             hideInputError(formElement, inputElement);
         }
-    };
+    };*/
  
 const hasInvalidInput = (inputList) => {            // Функция принимает массив полей
     // проходим по этому массиву методом some
@@ -93,7 +93,7 @@ const hasInvalidInput = (inputList) => {            // Функция прини
     });
 };
  
-export const toggleButtonState = (inputList, buttonElement,settings) => {           // Функция принимает массив полей ввода и элемент кнопки, состояние которой нужно менять
+export const toggleButtonState = (inputList, buttonElement, settings) => {           // Функция принимает массив полей ввода и элемент кнопки, состояние которой нужно менять
     // Если есть хотя бы один невалидный инпут
     if (hasInvalidInput(inputList)) {
  
