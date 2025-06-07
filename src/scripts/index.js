@@ -4,6 +4,9 @@ import { createCard } from './cards.js';
 import { enableValidation, toggleButtonState } from '../components/validate.js';
 import { openModal, closeModal, closeByOverlay } from './modal.js'
  
+// Переменная для хранения ID текущего пользователя
+let currentUserId = null;
+
 // запрос к сереру (API)
 const config = {
     baseUrl: 'https://nomoreparties.co/v1/apf-cohort-202',  // адрес группы на сервере
@@ -75,6 +78,19 @@ function addNewCards(name, link){
     });
 };
 
+export function deleteCardFromServer(cardId) {
+    return fetch(`${config.baseUrl}/cards/${cardId}`, {
+        method: 'DELETE',
+        headers: config.headers
+    })
+    .then(res => {
+        if(res.ok){
+            return res.json();
+        }
+        return Promise.reject(`Ошибка при удалении карточки: ${res.status}`);
+    })
+}
+
 // Загрузка информации о пользователе и карточки с сервера
 document.addEventListener('DOMContentLoaded', function () {
     const profileImage = document.querySelector('.profile__image');
@@ -89,9 +105,11 @@ document.addEventListener('DOMContentLoaded', function () {
         profileDescription.textContent = user.about;
         profileImage.style.backgroundImage = `url(${user.avatar})`;
 
+        currentUserId = user._id; // СОХРАНЯЕМ ID ТЕКУЩЕГО ПОЛЬЗОВАТЕЛЯ
+
          // Отрисовываем начальные карточки
         cards.forEach(cardData => {
-            cardsContainer.append(createCard(cardData));
+            cardsContainer.append(createCard(cardData, currentUserId));
         });
     })
     .catch(err => {
@@ -209,6 +227,9 @@ function handleCardFormSubmit (evt) {
             cardFormElemnt.reset(); // Очищаем форму после добавления карточки
  
             closeModal(cardPopup);
+        })
+        .catch(err => {
+            console.error('Ошибка при добавлении новой карточки:', err);
         });
 }
  
